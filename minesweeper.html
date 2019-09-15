@@ -1,0 +1,806 @@
+<canvas id="myCanvas" width="600" height="600" style="border:1px solid #000000;"></canvas>
+<input type="button" value="Refresh Page" onClick="location.href=location.href">
+
+<script>
+
+    let canvas = document.getElementById("myCanvas");
+    let ctx = canvas.getContext("2d");
+
+    var img = new Image();
+    img.src = "bomb.jpg"
+
+    let width = canvas.width;
+    let height = canvas.height;
+
+    let grid = [];
+    let side = 50;
+
+    let minesNumber = 0;
+    let minesArray = [];
+
+
+    class Cell {
+
+        constructor(x, y) {
+
+            this.x = x;
+            this.y = y;
+            this.showed = false;
+            this.mine = false;
+            this.neighborhood = 0;
+            this.done = false;
+
+        }
+
+        draw() {
+
+            ctx.rect(this.x, this.y, side, side);
+            ctx.stroke();
+
+        }
+    }
+
+
+    function drawGrid() {
+
+        for (let i = 0; i < width; i += 50) {
+
+            for (let j = 0; j < height; j += 50) {
+
+                grid.push(new Cell(j, i));
+                new Cell(i, j).draw();
+
+            }
+        }
+
+        console.log(grid)
+
+    }
+
+    drawGrid();
+
+    //Position for mines
+    function getMinesPosition(minesNumber) {
+
+        for (let i = 0; i < (Math.pow((minesNumber / side), 2) / 5); i++) {
+
+            let x = Math.floor(Math.random() * Math.pow((minesNumber / side), 2));
+
+
+            if (!minesArray.includes(x)) {
+
+                minesArray.push(x);
+
+                grid[x].mine = true;
+
+            }
+        }
+    }
+    
+    getMinesPosition(width);
+
+    //Neighbors for every cell
+    function getNeighborhood() {
+
+        for (cell of grid) {
+
+            let n = grid.indexOf(cell);
+
+
+            //Not on the edge or corner
+            if (grid[n].x !== 0 && grid[n].x !== (width - side) && grid[n].y !== 0 && grid[n].y !== (height - side)) {
+
+
+                if (grid[n - (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+            } 
+            
+            //Top left corner
+            else if (grid[n].x == 0 && grid[n].y == 0) {
+
+                if (grid[n + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n + (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n + (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            }
+
+            //Top right corner
+            else if (grid[n].x == (width - side) && grid[n].y == 0) {
+
+                if (grid[n - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n + (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n + (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            } 
+            
+            //Bottom ledt corner
+            else if (grid[n].x == 0 && grid[n].y == (height - side)) {
+
+                if (grid[n + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n - (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n - (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            } 
+            
+            //Top right corner
+            else if (grid[n].x == (width - side) && grid[n].y == (height - side)) {
+
+                if (grid[n - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n - (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n - (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            } 
+            
+            //Top edge
+            else if (grid[n].x !== 0 && grid[n].y == 0) {
+
+                if (grid[n - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+            }
+
+            //Bottom edge
+            else if(grid[n].x !== 0 && grid[n].y == (height - side)) {
+
+                if (grid[n - (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            }
+
+            //Left edge 
+            else if(grid[n].x == 0 && grid[n].y !== 0) {
+
+                if (grid[n - (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side) + 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+            }
+
+            //Right edge
+            else if(grid[n].x == (width - side) && grid[n].y !== 0) {
+
+                if (grid[n - (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+
+                if (grid[n + (width / side) - 1].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            
+                if (grid[n + (width / side)].mine == true) {
+
+                    grid[n].neighborhood += 1;
+
+                }
+            }
+        }
+    }
+
+    getNeighborhood();
+
+    //Click event
+    canvas.addEventListener("mousedown", clickDetected);
+
+    function clickDetected() {
+
+        let xClick = event.clientX;
+        let yClick = event.clientY;
+
+        let xCellClicked = side * (Math.floor(xClick / side));
+        let yCellClicked = side * (Math.floor(yClick / side));
+
+        let numCellGrid = ((yCellClicked / side) * (width / side)) + (xCellClicked / side);
+        
+        //Change boolean
+        grid[numCellGrid].showed = true;
+
+        drawCell(numCellGrid, xCellClicked, yCellClicked);
+
+        console.log(grid[numCellGrid])
+
+        
+        
+
+    }
+
+    function zeroNeighborhood(n) {
+
+        //Not on the edge or corner
+            if (grid[n].x !== 0 && grid[n].x !== (width - side) && grid[n].y !== 0 && grid[n].y !== (height - side)) {
+
+
+                if (grid[n - (width / side) - 1].showed == false) {
+
+                    drawCell(n - (width / side) - 1);
+
+                }
+            
+                if (grid[n - (width / side)].showed == false) {
+
+                    drawCell(n - (width / side));
+
+                }
+            
+                if (grid[n - (width / side) + 1].showed == false) {
+
+                    drawCell(n - (width / side) + 1);
+
+                }
+            
+                if (grid[n - 1].showed == false) {
+
+                    drawCell(n - 1);
+
+                }
+            
+                if (grid[n + 1].showed == false) {
+
+                    drawCell(n + 1);
+
+                }
+            
+                if (grid[n + (width / side) - 1].showed == false) {
+
+                    drawCell(n + (width / side) - 1);
+
+                }
+            
+                if (grid[n + (width / side)].showed == false) {
+
+                    drawCell(n + (width / side));
+
+                }
+            
+                if (grid[n + (width / side) + 1].showed == false) {
+
+                    drawCell(n + (width / side) + 1);
+
+                }
+
+            } 
+            
+            //Top left corner
+            else if (grid[n].x == 0 && grid[n].y == 0) {
+
+                if (grid[n + 1].showed == false) {
+
+                    drawCell(n + 1);
+
+                }
+
+                if (grid[n + (width / side)].showed == false) {
+
+                    drawCell(n + (width / side));
+
+                }
+
+                if (grid[n + (width / side) + 1].showed == false) {
+
+                    drawCell(n + (width / side) + 1);
+
+                }
+            }
+
+            //Top right corner
+            else if (grid[n].x == (width - side) && grid[n].y == 0) {
+
+                if (grid[n - 1].showed == false) {
+
+                    drawCell(n - 1);
+
+                }
+
+                if (grid[n + (width / side) - 1].showed == false) {
+
+                    drawCell(n + (width / side) - 1);
+
+                }
+
+                if (grid[n + (width / side)].showed == false) {
+
+                    drawCell(n + (width / side));
+
+                }
+            } 
+            
+            //Bottom ledt corner
+            else if (grid[n].x == 0 && grid[n].y == (height - side)) {
+
+                if (grid[n + 1].showed == false) {
+
+                    drawCell(n + 1);
+
+                }
+
+                if (grid[n - (width / side)].showed == false) {
+
+                    drawCell(n - (width / side));
+
+                }
+
+                if (grid[n - (width / side) + 1].showed == false) {
+
+                    drawCell(n - (width / side) + 1);
+
+                }
+            } 
+            
+            //Top right corner
+            else if (grid[n].x == (width - side) && grid[n].y == (height - side)) {
+
+                if (grid[n - 1].showed == false) {
+
+                    drawCell(n - 1);
+
+                }
+
+                if (grid[n - (width / side) - 1].showed == false) {
+
+                    drawCell(n - (width / side) - 1);
+
+                }
+
+                if (grid[n - (width / side)].showed == false) {
+
+                    drawCell(n - (width / side));
+
+                }
+            } 
+            
+            //Top edge
+            else if (grid[n].x !== 0 && grid[n].y == 0) {
+
+                if (grid[n - 1].showed == false) {
+
+                    drawCell(n - 1);
+
+                }
+            
+                if (grid[n + 1].showed == false) {
+
+                    drawCell(n + 1);
+
+                }
+            
+                if (grid[n + (width / side) - 1].showed == false) {
+
+                   drawCell(n + (width / side) - 1);
+
+                }
+            
+                if (grid[n + (width / side)].showed == false) {
+
+                   drawCell(n + (width / side))
+
+                }
+            
+                if (grid[n + (width / side) + 1].showed == false) {
+
+                    drawCell(n + (width / side) + 1);
+
+                }
+
+            }
+
+            //Bottom edge
+            else if (grid[n].x !== 0 && grid[n].y == (height - side)) {
+
+                if (grid[n - (width / side) - 1].showed == false) {
+
+                    drawCell(n - (width / side) - 1);
+
+                }
+            
+                if (grid[n - (width / side)].showed == false) {
+
+                    drawCell(n - (width / side));
+
+                }
+            
+                if (grid[n - (width / side) + 1].showed == false) {
+
+                    drawCell(n - (width / side) + 1);
+
+                }
+            
+                if (grid[n - 1].showed == false) {
+
+                    drawCell(n - 1)
+
+                }
+            
+                if (grid[n + 1].showed == false) {
+
+                    drawCell(n + 1);
+
+                }
+            }
+
+            //Left edge 
+            else if (grid[n].x == 0 && grid[n].y !== 0) {
+
+                if (grid[n - (width / side)].showed == false) {
+
+                    drawCell(n - (width / side));
+
+                }
+            
+                if (grid[n - (width / side) + 1].showed == false) {
+
+                    drawCell(n - (width / side) + 1);
+
+                }
+            
+                if (grid[n + 1].showed == false) {
+
+                    drawCell(n + 1);
+
+                }
+            
+                if (grid[n + (width / side)].showed == false) {
+
+                    drawCell(n + (width / side));
+
+                }
+            
+                if (grid[n + (width / side) + 1].showed == false) {
+
+                    drawCell(n + (width / side) + 1);
+
+                }
+
+            }
+
+            //Right edge
+            else if (grid[n].x == (width - side) && grid[n].y !== 0) {
+
+                if (grid[n - (width / side) - 1].showed == false) {
+
+                    drawCell(n - (width / side) - 1);
+
+                }
+            
+                if (grid[n - (width / side)].showed == false) {
+
+                    drawCell(n - (width / side));
+
+                }
+            
+                if (grid[n - 1].showed == false) {
+
+                    drawCell(n - 1);
+
+                }
+
+                if (grid[n + (width / side) - 1].showed == false) {
+
+                    drawCell(n + (width / side) - 1);
+
+                }
+            
+                if (grid[n + (width / side)].showed == false) {
+
+                    drawCell(n + (width / side));
+
+                }
+            }
+
+        
+    }
+
+
+    function drawCell(index) {
+
+        let x = grid[index].x;
+        let y = grid[index].y;
+
+        if (grid[index].mine == true) {
+            
+            //ctx.fillStyle = "#000000"
+            //ctx.fillRect(grid[numCellGrid].x, grid[numCellGrid].y, side, side);
+            ctx.drawImage(img, x + 6, y + 5, 40, 40);
+            grid[index].done = true;
+            canvas.removeEventListener("mousedown", clickDetected);
+
+        } 
+        
+        else {
+
+            let neighborhoodOfThis = grid[index].neighborhood;
+
+            if (neighborhoodOfThis == 1 && grid[index].done == false) {
+
+                ctx.fillStyle = "#08088A";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            } 
+            
+            else if (neighborhoodOfThis == 2 && grid[index].done == false) {
+
+                ctx.fillStyle = "#298A08";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            } 
+            
+            else if (neighborhoodOfThis == 3 && grid[index].done == false) {
+
+                ctx.fillStyle = "#FF8000";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            } 
+            
+            else if (neighborhoodOfThis == 4 && grid[index].done == false) {
+
+                ctx.fillStyle = "#FE2EC8";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            }
+
+            else if (neighborhoodOfThis == 5 && grid[index].done == false) {
+
+                ctx.fillStyle = "#D7DF01";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            }
+
+            else if (neighborhoodOfThis == 6 && grid[index].done == false) {
+
+                ctx.fillStyle = "#8904B1";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            }
+
+            else if (neighborhoodOfThis == 7 && grid[index].done == false) {
+
+                ctx.fillStyle = "#FFFF00";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            }
+
+            else if (neighborhoodOfThis == 8 && grid[index].done == false) {
+
+                ctx.fillStyle = "#58D3F7";
+                ctx.font = "30px Arial";
+                ctx.fillText(neighborhoodOfThis, x + ((side / 5 ) * 1.75), y + ((side / 5 ) * 3.5));
+                grid[index].done = true;
+
+            }
+
+            else if (neighborhoodOfThis == 0 && grid[index].done == false) {
+
+                grid[index].done = true;
+                zeroNeighborhood(index);
+
+            }
+        }
+    }
+
+    //Check if all are showed
+    function checkCellShowed(cell) {
+
+        return cell.done
+
+    }
+
+    //End
+    let end = window.setInterval(checkEnd);
+
+    function checkEnd() { 
+
+        if (grid.every(checkCellShowed)) {
+
+            console.log("Finished")
+
+        }
+
+    }
+    
+    
+</script>
